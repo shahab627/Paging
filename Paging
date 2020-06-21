@@ -1,0 +1,322 @@
+# Simulations-
+#include<iostream>
+using namespace std;
+
+int PageTable[20], Process[20], countStorage = 0,Proces_size=0,frameCount=0, Virtualcount = 50;
+int virtualStorage[50];
+int PhysicalStorage[45];
+
+void insertProcess(int index);
+void DisplayContent();
+void MMU(int PocessNo);
+void Initialize();
+void initializeMemory();
+void checkMemory();
+void deleteProcess(int ProcessNo);
+void pageTable(int ProcessNo);
+void VirtualMemory(int index);
+
+
+
+void main()
+{
+
+	int num_proc,count=0,choice, ProcessNo,size;
+	
+	Initialize();
+	initializeMemory();
+	DisplayContent();
+
+
+
+	do
+	{
+
+		cout << "\n\tPress 1 to Add process to Memory";
+		cout << "\n\tPress 2 to Remove Process from Memory";
+		cout << "\n\tPress 3 to Retrieve Data of process";
+		cout << "\n\tPress 4 to Display Memory\n";
+		cout << "\n\t\t Enter :: ";
+		cin >> choice;
+
+	
+		if (choice == 1)
+		{
+			cout << "\n\tEnter Process Size to Add :: ";
+			cin >> size;
+			Proces_size++;
+			Process[Proces_size] = size;
+			insertProcess(Proces_size);
+		}
+		if (choice == 2)
+		{
+			cout << "\n\tEnter Process No to delete :: ";
+			cin >> ProcessNo;
+			deleteProcess(ProcessNo);
+		}
+		if (choice == 3)
+		{
+			cout << "\n\tEnter Process No to delete :: ";
+			cin >> ProcessNo;
+			MMU(ProcessNo);
+		}
+		if (choice == 4)
+		{
+			DisplayContent();
+		}
+
+		cout << "\n\tPress 1 to try agin and 2 to exit :: ";
+		cin >> choice;
+
+	} while (choice==1);
+
+}
+
+
+
+void MMU(int ProcessNo)
+{
+	
+
+	int FrameNo[10], check = 0,count=0,j=0,i=0;
+
+	for (int i = 0; i < 20; i++)  // checking frameno in pagetable for given process
+	{
+		if (PageTable[i] == ProcessNo)
+		{
+			
+			FrameNo[count] = i;
+			count++;
+		}
+	}
+
+	while ( j != count)
+	{
+		check = 0;
+		i = 0;
+	
+		while (i != 45 )
+		{
+			
+			
+			if (check == FrameNo[j])
+			{
+				
+			
+				cout << "The Data present in Frame : " << FrameNo[j] << endl;
+				check = 0;
+				i++;
+				while (check != 4)
+				{
+					cout << PhysicalStorage[i] << endl;
+					i++;
+					check++;
+				}
+				break;
+			}
+
+			i = i + 5;
+			check++;
+
+		}
+
+		j++;
+	}
+}
+
+void Initialize()
+{
+	for (int i = 0; i <= 45; i++)
+	{
+		if (i % 5 != 0 )
+		{
+			PhysicalStorage[i] = -1;
+		}
+		if (i % 5 == 0 || i == 0)
+		{
+			PhysicalStorage[i] = -2;
+		}
+	}
+
+	for (int i = 0; i < 20; i++)
+	{
+		PageTable[i] = -1;
+	}
+
+	for (int i = 0; i <= 50; i++)
+	{
+		if (i % 5 != 0)
+		{
+			virtualStorage[i] = -1;
+		}
+		if (i % 5 == 0 || i == 0)
+		{
+			virtualStorage[i] = -2;
+		}
+		
+	}
+}
+
+void initializeMemory()
+{
+	Process[0] = 8;
+	Process[1] = 10;
+	Process[2] = 6;
+	Process[3] = 4;
+
+	insertProcess(0);
+	insertProcess(1);
+	insertProcess(2);
+	insertProcess(3);
+	Proces_size = 3;
+
+}
+
+void DisplayContent()
+{
+	cout << "\t\tMain memory is :: \n";
+	cout << "\tindex\tStored_Data\n\n";
+	for (int i = 0; i <= 45; i++)
+	{
+		cout << "\t" << i << "\t" << PhysicalStorage[i] << endl;
+	}
+	cout << "\t\tPage table  is :: \n";
+	cout << "\tFrameNo\tPage\n\n";
+	for (int i = 0; i < 20; i++)
+	{
+		cout << "\t" << i << "\t" << PageTable[i] << endl;
+	}
+	cout << "\t\tVitual Memory   is :: \n";
+	cout << "\tindex\tContent\n\n";
+	for (int i = 0; i <= 50; i++)
+	{
+		cout << "\t" << i << "\t" << virtualStorage[i] << endl;
+	}
+
+}
+
+
+ void  checkMemory()
+ {
+	 countStorage = 0;   
+	 
+
+	while (countStorage != 45)
+	{
+		if (PhysicalStorage[countStorage] == -2 && PhysicalStorage[countStorage + 1] == -1)  // checking the emtyness of block
+		{
+			
+			countStorage++;
+			frameCount++;
+			break;
+		}
+		else
+		{
+			countStorage = countStorage + 5;      //skiping the occupied blocks
+	
+		}
+	}
+	if (countStorage == 45)
+	{
+		cout << "The Memory is Full" << endl;
+	}
+
+ }
+
+void insertProcess(int index)
+{
+
+	int  processNo = index;
+	int value = Process[index];
+
+
+	checkMemory();
+	
+	for (int i = 0; i < value; i++)
+	{
+
+		PhysicalStorage[countStorage] = processNo;
+		countStorage++;
+		if (PhysicalStorage[countStorage] == -2 && i < value - 1)  // checking values are remaining
+		{
+			checkMemory();
+		}
+	}
+
+	
+	if (PhysicalStorage[countStorage] > -2)   // making empty the remaining values of Block
+	{
+		while (PhysicalStorage[countStorage] != -2)
+		{
+			countStorage++;
+		
+		}
+	}
+
+	VirtualMemory(processNo);
+	pageTable(processNo);
+}
+
+void pageTable(int ProcessNo)
+{
+	
+	for (int i = 0; i < 20; i++)
+	{
+		if (PageTable[i] == -1 && frameCount > 0)
+		{
+			PageTable[i] = ProcessNo;
+			frameCount--;
+		}
+	}
+	
+}
+void VirtualMemory(int index)
+{
+	int value = Process[index];
+
+	for (int i = value; i > 0; i--)
+	{
+		if (virtualStorage[Virtualcount] == -1)
+		{
+			virtualStorage[Virtualcount] = index;
+			
+		}
+		Virtualcount--;
+	}
+	if (virtualStorage[Virtualcount] > -2)
+	{
+		while (virtualStorage[Virtualcount] != -2)
+		{
+			Virtualcount--;
+
+		}
+	}
+}
+void deleteProcess(int ProcessNo)
+{
+	int check = ProcessNo;
+	for (int i = 0; i <= 45; i++)
+	{
+		if (PhysicalStorage[i] == check)
+		{
+			PhysicalStorage[i] = -1;
+		}
+	}
+	for (int i = 0; i < 20; i++)
+	{
+		if (PageTable[i] == ProcessNo)
+		{
+			PageTable[i] = -1;
+		}
+	}
+
+	for (int i = 0; i <= 50; i++)
+	{
+		if (virtualStorage[i] == check)
+		{
+			virtualStorage[i] = -1;
+		}
+	}
+	Virtualcount = 50;
+}
+
